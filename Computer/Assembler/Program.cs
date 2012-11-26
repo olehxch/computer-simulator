@@ -19,6 +19,7 @@ namespace Assembler
             const int MAXLABELLENGHT = 6;
 
             // addressing
+            // for indirrect addressing - @ 1000 0000 - 8th bit set's indirrect addressing
             // |         4              |        3       |       2       |      1      |
             // | INSTRUCTION 31-28 (24) | OPERAND1 27-16 | OPERAND2 26-8 | OPERAND3 7-0|
             // ------------------------------------------------------------------|
@@ -49,8 +50,8 @@ namespace Assembler
             String[] INSTRUCTIONSARRAY = { "HALT", "DEC", "DIV", "XIMUL", "XOR", "SHL", "MOV", "JMAE", "JMNGE", ".FILL", "BT", "CMP", "RCL" };
 
             // symbol map list
-            Dictionary<String, int> symbolMapList = new Dictionary<String, int>();
-            List<String> errorList = new List<String>();
+            public Dictionary<String, int> symbolMapList = new Dictionary<String, int>();
+            public List<String> errorList = new List<String>();
             // error states
             public bool ERRORSTATE = false;
             public int COUNTERRORS = 0;
@@ -115,21 +116,22 @@ namespace Assembler
                 Regex rgxOnlyNum = new Regex(@"[0-9]+");
                 Regex onlyLeters = new Regex(@"[a-zA-Z]+");
 
-                // if ( rgxOnlyNum.IsMatch(args[0]) && rgxOnlyNum.IsMatch(args[1]) && rgx.IsMatch(args[2]) )
-
                 // for jumps
                 if ( (instruction[1] == "JMAE") || (instruction[1] == "JMNGE") )
                 {
                     if ( instruction.Length >= 5 )
                     {
                         String[] iArgs = { instruction[2], instruction[3], instruction[4] };
-                        //if ( !testArgs(iArgs, true) )
-                        //    if( !testAddr(iArgs) )
-                                addErrorLine(pos + "::Bad arguments");
+                        if ( testArgs(iArgs, true) )
+                        {
+                            if ( testAddr(iArgs) ) return;
+                        }
+                        else addErrorLine(pos + "::Bad arguments");
                     }
                     else addErrorLine(pos + "::Bad arguments");
                     return;
                 }
+
                 // 3 arguments
                 if ( (instruction[1] == "DIV") || (instruction[1] == "XIMUL") || (instruction[1] == "XOR") || (instruction[1] == "RCL") ||
                     (instruction[1] == "SHL") || (instruction[1] == "JMAE") || (instruction[1] == "JMNGE") )
@@ -137,30 +139,41 @@ namespace Assembler
                     if ( instruction.Length >= 5 )
                     {
                         String[] iArgs = { instruction[2], instruction[3], instruction[4] };
-                        if ( !testArgs(iArgs, false) || !testAddr(iArgs) )
-                            addErrorLine(pos + "::Bad arguments");
+                        if ( testArgs(iArgs, false) )
+                        {
+                            if ( testAddr(iArgs) ) return;
+                        }
+                        else addErrorLine(pos + "::Bad arguments");
                     }
                     else addErrorLine(pos + "::Bad arguments");
                 }
+
                 // 2 arguments
                 if ( (instruction[1] == "MOV") || (instruction[1] == "BT") || (instruction[1] == "CMP") )
                 {
                     if ( instruction.Length >= 4 )
                     {
                         String[] iArgs = { instruction[2], instruction[3] };
-                        if ( !testArgs(iArgs, false) || !testAddr(iArgs) )
-                            addErrorLine(pos + "::Bad arguments");
+                        if ( testArgs(iArgs, false) )
+                        {
+                            if ( testAddr(iArgs) ) return;
+                        }
+                        else addErrorLine(pos + "::Bad arguments");
                     }
                     else addErrorLine(pos + "::Bad arguments");
                 }
+
                 // 1 arguments
                 if ( (instruction[1] == "DEC") )
                 {
                     if ( instruction.Length >= 3 )
                     {
                         String[] iArgs = { instruction[2] };
-                        if ( !testArgs(iArgs, false) || !testAddr(iArgs) )
-                            addErrorLine(pos + "::Bad arguments");
+                        if ( testArgs(iArgs, false ) )
+                        {
+                            if ( testAddr(iArgs) ) return;
+                        }
+                        else addErrorLine(pos + "::Bad arguments");
                     }
                     else addErrorLine(pos + "::Bad arguments");
                 }
@@ -187,25 +200,12 @@ namespace Assembler
                     com = (SHL << INSTRUCTION_MEM_SHIFT | (convertNumTo(instruction[2]) << OPERAND1_MEM_SHIFT) | convertNumTo(instruction[3]) << OPERAND2_MEM_SHIFT | (convertNumTo(instruction[4])) << OPERAND3_MEM_SHIFT);
                 else if ( instruction[1] == "MOV" )
                     com = (MOV << INSTRUCTION_MEM_SHIFT | (convertNumTo(instruction[2]) << OPERAND1_MEM_SHIFT) | convertNumTo(instruction[3]) << OPERAND2_MEM_SHIFT);
-                else if ( instruction[1] == "JMAE" )
+                else if ( instruction[1] == "JMAE" || instruction[1] == "JMNGE" )
                 { 
                     int ov;
                     if ( symbolMapList.TryGetValue(instruction[4], out ov) )
                     {
                         if ( (new Regex(@"[a-zA-Z]+").IsMatch(instruction[4])) )
-                        {
-                            return (JMAE << INSTRUCTION_MEM_SHIFT | (convertNumTo(instruction[2]) << OPERAND1_MEM_SHIFT) | convertNumTo(instruction[3]) << OPERAND2_MEM_SHIFT | convertNumTo(symbolMapList[instruction[4]]) << OPERAND3_MEM_SHIFT);
-                        }
-                        else return (JMAE << INSTRUCTION_MEM_SHIFT | (convertNumTo(instruction[2]) << OPERAND1_MEM_SHIFT) | convertNumTo(instruction[3]) << OPERAND2_MEM_SHIFT | convertNumTo(instruction[4]) << OPERAND3_MEM_SHIFT);
-                    }
-                    else addErrorLine("There is not label" + instruction[4]);
-                }
-                else if ( instruction[1] == "JMNGE" )
-                {
-                    int ov;
-                    if ( symbolMapList.TryGetValue(instruction[4], out ov) )
-                    {
-                        if ( new Regex(@"[a-zA-Z]+").IsMatch(instruction[4]) )
                         {
                             return (JMAE << INSTRUCTION_MEM_SHIFT | (convertNumTo(instruction[2]) << OPERAND1_MEM_SHIFT) | convertNumTo(instruction[3]) << OPERAND2_MEM_SHIFT | convertNumTo(symbolMapList[instruction[4]]) << OPERAND3_MEM_SHIFT);
                         }
@@ -258,36 +258,33 @@ namespace Assembler
             // test arguments -> is a number/label
             public bool testArgs(String[] args, bool isJmp)
             {
-                if ( !isJmp )
+                if ( isJmp )
                 {
-                    // if it is NOT a jump...
-                    if ( args.Length == 3 )
-                        if ( rgxOnlyNum.IsMatch(args[0]) && rgxOnlyNum.IsMatch(args[1]) && rgxOnlyNum.IsMatch(args[2]) ) return true;
-                    if ( args.Length == 2 )
-                        if ( rgxOnlyNum.IsMatch(args[0]) && rgxOnlyNum.IsMatch(args[1]) ) return true;
-                    if ( args.Length == 1 )
-                        if ( rgxOnlyNum.IsMatch(args[0]) ) return true;
-                }
-                else 
-                {
-                    // if it is a jump...
                     if ( args.Length == 3 )
                         if ( rgxOnlyNum.IsMatch(args[0]) && rgxOnlyNum.IsMatch(args[1]) && rgx.IsMatch(args[2]) ) return true;
-                }
-                return false;
+                    return false;
+                } else foreach ( var n in args)
+                {
+                    if ( rgxOnlyNum.IsMatch(n) )
+                    {
+                        continue;
+                    }
+                    else return false;
+                } return true;
             }
 
             // test arguments range
             public bool testAddr(String[] args)
             {
+                Regex rgx = new Regex(@"[a-zA-z]+");
+
                 if ( args.Length == 3 )
-                {
-                    Regex rgx = new Regex(@"[a-zA-z]+");
+                {  
                     // when operand 3 is label
                     if ( rgx.IsMatch(args[2]) )
                         if ( (convertNumTo(args[0]) >= 0 && convertNumTo(args[0]) < 64) && (convertNumTo(args[1]) >= 0 && convertNumTo(args[1]) < 64) ) return true;
                     // when operand 3 is register
-                    else if ( (convertNumTo(args[0]) >= 0 && convertNumTo(args[0]) < 64) && (convertNumTo(args[1]) >= 0 && convertNumTo(args[1]) < 64) && (convertNumTo(args[2]) >= 0 && convertNumTo(args[2]) < 64) ) return true;
+                    if ( (convertNumTo(args[0]) >= 0 && convertNumTo(args[0]) < 64) && (convertNumTo(args[1]) >= 0 && convertNumTo(args[1]) < 64) && (convertNumTo(args[2]) >= 0 && convertNumTo(args[2]) < 64) ) return true;
                 }
                 if ( args.Length == 2 )
                     if ( (convertNumTo(args[0]) >= 0 && convertNumTo(args[0]) < 64) && (convertNumTo(args[1]) >= 0 && convertNumTo(args[1]) < 64) ) return true;
@@ -316,13 +313,13 @@ namespace Assembler
              
             if (args.Length == 2)
             {
-		        // read instructions from file and parse
+                // read instructions from file and parse
                 String instructionLine;
                 StreamReader fstr = new StreamReader(args[0]);
                 int pos = 0;
 
                 Console.WriteLine("----------------------------\nSource code:\n----------------------------");
-                while ((instructionLine = fstr.ReadLine()) != null)
+                while ( (instructionLine = fstr.ReadLine()) != null )
                 {
                     // write source code to a console
                     Console.WriteLine(pos + " : " + instructionLine);
@@ -337,9 +334,33 @@ namespace Assembler
                     assembler.createSymbolMap(pos, instruction[0]);
                     instruction[1] = instruction[1].ToUpper();
                     // check for invalid instructions and check for enough arguments
-                    if( assembler.checkForInvalidInstruction(pos, instruction[1]) )
+                    if ( assembler.checkForInvalidInstruction(pos, instruction[1]) )
                         assembler.checkForEnoughtParametrs(pos, instruction);
                     pos++;
+                }
+
+                // check for correct labels
+                {
+                    fstr = new StreamReader(args[0]);
+                    StreamWriter fout = new StreamWriter(args[1]);
+                    pos = 0;
+
+                    while ( (instructionLine = fstr.ReadLine()) != null )
+                    {
+                        String[] instruction = instructionLine.Split(' ', '\t');
+                        instruction[1] = instruction[1].ToUpper();
+
+                        if ( instruction[1] == "JMAE" || instruction[1] == "JMNGE" )
+                        {
+                            int ov;
+                            if ( !assembler.symbolMapList.TryGetValue(instruction[4], out ov) )
+                                assembler.addErrorLine(pos + "::There is no label \'" + instruction[4] + '\'');
+                        }
+
+                        pos++;
+                    }
+                    fout.Close();
+                    fstr.Close();
                 }
 
                 // end assembling
@@ -365,8 +386,8 @@ namespace Assembler
                         int com = assembler.createMachineCode(instruction);
 
                         // write to file
-                        fout.WriteLine( com );
-                        
+                        fout.WriteLine(com);
+
                         // write to a console window results
                         Console.WriteLine(pos + " : " + com + "\t(" + String.Format("0x{0:X}", com) + ")");
                         pos++;
@@ -378,7 +399,9 @@ namespace Assembler
                     Console.WriteLine("-----------------------------\nAssembling ended successfully");
                     System.Console.ReadKey();
                 }
-            } else {
+            }
+            else
+            {
 		        // show error
 		        Console.Out.Write("error: <assembly-code-file> <machine-code-file>\n");
                 Console.ReadKey();
