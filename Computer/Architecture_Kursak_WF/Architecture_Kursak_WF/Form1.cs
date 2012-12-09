@@ -136,7 +136,7 @@ namespace Architecture_Kursak_WF
                 statusStrip1.BackColor = Color.ForestGreen;
 
                 Dictionary<String, int> sml = assembler.symbolMapList;
-                
+                rtbSymbolMap.Clear();
                 foreach ( var i in sml )
                 {
                     rtbSymbolMap.Text += i.Value + " = " + i.Key + '\n';
@@ -192,6 +192,12 @@ namespace Architecture_Kursak_WF
                 toolStripStatusLabel1.Text = "IO Error";
                 statusStrip1.BackColor = Color.Red;
             }
+        }
+
+        private void helpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            HelpForm hl = new HelpForm();
+            hl.Show();
         }
         
     }

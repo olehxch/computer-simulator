@@ -1,7 +1,8 @@
 	load 1 a
-	mov 2 1
+	dec 1
+	mov 1 2
 	cmp 1 2
 	halt			end program
-a .fill 2
+a .fill 4
 b .fill 1
-des .fill 5643213
+des .fill 456

@@ -60,6 +60,14 @@ namespace Simulator
             public int ZF;    // zero flag
         }
 
+        public class InstructionClass
+        {
+            public long instruction = 0;
+            public long arg1 = 0;
+            public long arg2 = 0;
+            public long arg3 = 0;
+        }
+
         private List<StateClass> states = new List<StateClass>();
         public List<StateClass> getStateList() { return states; }
         public Dictionary<ulong, long> symbolMapList = new Dictionary<ulong, long>(); // symbol map
@@ -71,7 +79,8 @@ namespace Simulator
             public int[] reg = new int[64];       // registers [0..63]
             public int[] mem = new int[16777216]; // memory 0..16777215 
             public Flags f;      // CF, SF, ZF
-            public StateClass(int ip, String instructionLine, int[] memory, int[] registers, Flags f)
+            public InstructionClass instruction;
+            public StateClass(int ip, String instructionLine, int[] memory, int[] registers, Flags f, InstructionClass i)
             {
                 this.instructionLine = instructionLine;
                 this.ip = ip;
@@ -80,6 +89,8 @@ namespace Simulator
                 registers.CopyTo(this.reg, 0);
                 this.f = new Flags();
                 this.f = f;
+                this.instruction = new InstructionClass();
+                this.instruction = i;
             }
         }
 
@@ -114,20 +125,25 @@ namespace Simulator
             String instructionLine;     //  line with instructions readed from file
 
             // initial state
-            states.Add(new StateClass(ip,"Initial Status", memory, registers, new Flags()));
+            states.Add(new StateClass(ip,"Initial Status", memory, registers, new Flags(), new InstructionClass() ));
 
             while ( (instructionLine = fstr.ReadLine()) != null )
             {             
                 instruction = Convert.ToInt64(instructionLine);
                 // init system
                 Flags f = new Flags();
-
+                InstructionClass ic = new InstructionClass();
                 // get arguments
                 // [ instruction | arg1 | arg2 | arg3 ]
                 arg3 = (instruction & OPERAND3_MASK) >> OPERAND3_MEM_SHIFT;
                 arg2 = (instruction & OPERAND2_MASK) >> OPERAND2_MEM_SHIFT;
                 arg1 = (instruction & OPERAND1_MASK) >> OPERAND1_MEM_SHIFT;
                 instruction = (instruction & INSTRUCTION_MASK) >> INSTRUCTION_MEM_SHIFT;
+                
+                ic.instruction = instruction;
+                ic.arg1 = arg1;
+                ic.arg2 = arg2;
+                ic.arg3 = arg3;
 
                 if ( instruction == LOAD )
                 {
@@ -188,7 +204,7 @@ namespace Simulator
                 else if ( instruction == HALT )
                 { break; }
 
-                states.Add(new StateClass(ip, instructionLine, memory, registers, f));
+                states.Add(new StateClass(ip, instructionLine, memory, registers, f, ic));
                 ip++;
             }
             fstr.Close();
