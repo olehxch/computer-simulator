@@ -407,12 +407,16 @@ namespace Assembler
                 // instruction[>i+1] = comment
                 String[] instruction = instructionLine.Split(' ', '\t');
 
-                // create symbol map
-                this.createSymbolMap(pos, instruction[0]);
-                instruction[1] = instruction[1].ToUpper();
-                // check for invalid instructions and check for enough arguments
-                if ( this.checkForInvalidInstruction(pos, instruction[1]) )
-                    this.checkForEnoughtParametrs(pos, instruction);
+                if ( instruction.Length >= 3 )
+                {
+                    // create symbol map
+                    this.createSymbolMap(pos, instruction[0]);
+                    instruction[1] = instruction[1].ToUpper();
+                    // check for invalid instructions and check for enough arguments
+                    if ( this.checkForInvalidInstruction(pos, instruction[1]) )
+                        this.checkForEnoughtParametrs(pos, instruction);
+                }
+                else this.addErrorLine(pos + "::Unknown instruction \'" );
                 pos++;
             }
 
@@ -424,25 +428,32 @@ namespace Assembler
 
                 while ( (instructionLine = fstr.ReadLine()) != null )
                 {
+ 
                     String[] instruction = instructionLine.Split(' ', '\t');
-                    instruction[1] = instruction[1].ToUpper();
-
-                    if ( instruction[1] == "JMAE" || instruction[1] == "JMNGE" )
+                    if ( instruction.Length >= 3 )
                     {
-                        int ov;
-                        if ( !this.symbolMapList.TryGetValue(instruction[4], out ov) )
-                            this.addErrorLine(pos + "::There is no label \'" + instruction[4] + '\'');
-                    }
+                        instruction[1] = instruction[1].ToUpper();
 
-                    pos++;
+                        if ( instruction[1] == "JMAE" || instruction[1] == "JMNGE" )
+                        {
+                            int ov;
+                            if ( !this.symbolMapList.TryGetValue(instruction[4], out ov) )
+                                this.addErrorLine(pos + "::There is no label \'" + instruction[4] + '\'');
+                        }
+                    }
+                    else this.addErrorLine(pos + "::Unknown instruction \'");
+                    pos++; 
                 }
                 fout.Close();
                 fstr.Close();
+                fout.Dispose();
+                fstr.Dispose();
             }
             // end assembling
             if ( ERRORSTATE )
             {
                 fstr.Close();
+                fstr.Dispose();
                 //Console.WriteLine("----------------------------\nAssembled with " + assembler.COUNTERRORS + " errors");
                 //this.showErrorListToConsole();
                 //System.Console.ReadKey();
@@ -473,12 +484,14 @@ namespace Assembler
                 // write to a console window results
                 //Console.WriteLine(pos + " : " + com + "\t(" + String.Format("0x{0:X}", com) + ")");
                 //res.Add(com + "\t(" + String.Format("0x{0:X}", com) + ")");
-                res.Add(com.ToString() + ":" + String.Format("0x{0:X}", com));
+                res.Add(com.ToString() + " " + String.Format("0x{0:X}", com));
                 pos++;
             }
 
             fout.Close();
             fstr.Close();
+            fout.Dispose();
+            fstr.Dispose();
             // end assembling
             //Console.WriteLine("-----------------------------\nAssembling ended successfully");
             //System.Console.ReadKey();

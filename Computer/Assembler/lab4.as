@@ -1,8 +1,6 @@
-hello xor 0 1 1		a -> reg1
-	div 63 61 1 a	b -> reg2
-	mov 12 12		as
-	dec 1
-	JMAE 1 2 hello
+	load 1 a
+	mov 2 1
+	cmp 1 2
 	halt			end program
 a .fill 2
 b .fill 1
