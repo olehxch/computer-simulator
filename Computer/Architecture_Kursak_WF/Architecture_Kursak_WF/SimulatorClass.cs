@@ -67,10 +67,10 @@ namespace Simulator
         public class StateClass 
         {
             public int ip = 0; // instruction pointer
-            String instructionLine;
+            public String instructionLine;
             public int[] reg = new int[64];       // registers [0..63]
             public int[] mem = new int[16777216]; // memory 0..16777215 
-            public Flags f;      // CF, SF, ZF
+            public Flags flags;      // CF, SF, ZF
             public StateClass(int ip, String instructionLine, int[] memory, int[] registers, Flags f)
             {
                 this.instructionLine = instructionLine;
@@ -78,8 +78,8 @@ namespace Simulator
                 
                 memory.CopyTo(this.mem, 0);
                 registers.CopyTo(this.reg, 0);
-                this.f = new Flags();
-                this.f = f;
+                this.flags = new Flags();
+                this.flags = f;
             }
         }
 

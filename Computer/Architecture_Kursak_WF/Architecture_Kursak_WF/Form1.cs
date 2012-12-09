@@ -94,14 +94,14 @@ namespace Architecture_Kursak_WF
 
                     assemble();
                 }
-                else if ( saveFileDialog1.ShowDialog() == DialogResult.OK )
+                else if ( openFileDialog1.ShowDialog() == DialogResult.OK )
                 {
-                    StreamWriter sw = new StreamWriter(saveFileDialog1.FileName);
-                    sw.Write(tbCodeEditor.Text);
+                    StreamReader sw = new StreamReader(openFileDialog1.FileName);
+                    tbCodeEditor.Text = sw.ReadToEnd();
                     sw.Close();
                     sw.Dispose();
-                    filePath = saveFileDialog1.FileName;
-                    toolStripStatusLabel1.Text = "Saved to: " + saveFileDialog1.FileName;
+                    filePath = openFileDialog1.FileName;
+                    toolStripStatusLabel1.Text = "Opened: " + openFileDialog1.FileName;
 
                     assemble();
                 }
@@ -154,7 +154,9 @@ namespace Architecture_Kursak_WF
 
         private void simulateToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            // create new form and simulate machine codes
+            SimulatorForm sf = new SimulatorForm(filePath);
+            sf.Show();
         }
 
         private void fastSaveToolStripMenuItem_Click(object sender, EventArgs e)
