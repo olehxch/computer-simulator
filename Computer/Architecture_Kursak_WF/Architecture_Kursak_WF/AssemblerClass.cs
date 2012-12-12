@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Collections; 
+using System.Collections;
 
 
 namespace Assembler
@@ -55,7 +55,7 @@ namespace Assembler
 
         // instruction list
         private String[] INSTRUCTIONSARRAY = { "HALT", "DEC", "DIV", "XIMUL", "XOR", "SHL", "MOV", "JMAE", "JMNGE", ".FILL", "BT", "CMP", "RCL", "LOAD", "SAVE", "CLEAR", "ADD", "NADN", "BEQ", "JARL" };
-        
+
         // symbol map list
         public Dictionary<String, int> symbolMapList = new Dictionary<String, int>();
         public List<String> errorList = new List<String>();
@@ -125,7 +125,7 @@ namespace Assembler
         private void checkForEnoughtParametrs(int pos, String[] instruction)
         {
             String inst = instruction[0].ToUpper();
-            
+
             // JMAE/JMNGE reg1 reg2 offset/label
             if ( (inst == "JMAE") || (inst == "JMNGE") )
             {
@@ -140,7 +140,7 @@ namespace Assembler
                 }
                 else addErrorLine(pos + "::Bad arguments");
                 return;
-            }         
+            }
 
             // LOAD/SAVE reg1 mem
             if ( (inst == "LOAD") || (inst == "SAVE") )
@@ -152,7 +152,7 @@ namespace Assembler
                         if ( (convertNumTo(instruction[1]) >= 0 && convertNumTo(instruction[1]) < REGISTERS) && (convertNumTo(instruction[2]) >= 0 && convertNumTo(instruction[2]) < MAXMEM) ) return;
                         else addErrorLine(pos + "::Arguments has incorrect bounds");
                     }
-                    else addErrorLine(pos + "::Arguments must consists only with numbers"); 
+                    else addErrorLine(pos + "::Arguments must consists only with numbers");
                 }
                 else addErrorLine(pos + "::Bad arguments");
                 return;
@@ -206,7 +206,7 @@ namespace Assembler
                 else addErrorLine(pos + "::Bad arguments");
                 return;
             }
-         }
+        }
 
         private dynamic convertNumTo(dynamic num)
         {
@@ -226,13 +226,13 @@ namespace Assembler
                 {
                     if ( (new Regex(@"[a-zA-Z]+").IsMatch(instruction[3])) )
                     {
-                        return (convertNumTo(LOAD) << INSTRUCTION_MEM_SHIFT | (convertNumTo(instruction[2]) << OPERAND1_MEM_SHIFT) | ( convertNumTo(symbolMapList[instruction[3]]) << OPERAND2_MEM_SHIFT ) );
+                        return (convertNumTo(LOAD) << INSTRUCTION_MEM_SHIFT | (convertNumTo(instruction[2]) << OPERAND1_MEM_SHIFT) | (convertNumTo(symbolMapList[instruction[3]]) << OPERAND2_MEM_SHIFT));
                     }
                     else return com = (convertNumTo(LOAD) << INSTRUCTION_MEM_SHIFT | (convertNumTo(instruction[2]) << OPERAND1_MEM_SHIFT) | convertNumTo(instruction[3]) << OPERAND3_MEM_SHIFT);
                 }
                 else addErrorLine("There is not label" + instruction[4]);
             }
-                
+
             else if ( instruction[1] == "SAVE" )
             {
                 int ov;
@@ -356,7 +356,7 @@ namespace Assembler
         // read code file and check for errors
         public List<String> readCodeAndCheck()
         {
-            
+
             // read instructions from file and parse
             String instructionLine;
             StreamReader fstr = new StreamReader(args[0]);
@@ -391,7 +391,7 @@ namespace Assembler
                     else
                     {
                         // add label to symbol map
-                        if( instruction[0] != "")
+                        if ( instruction[0] != "" )
                             this.addToSymbolMap(pos, instruction[0]);
 
                         // and check this instruction
@@ -414,7 +414,7 @@ namespace Assembler
 
                 while ( (instructionLine = fstr.ReadLine()) != null )
                 {
- 
+
                     String[] instruction = instructionLine.Split(' ', '\t');
                     if ( instruction.Length >= 3 )
                     {
@@ -428,7 +428,7 @@ namespace Assembler
                         }
                     }
                     else this.addErrorLine(pos + "::Unknown instruction \'");
-                    pos++; 
+                    pos++;
                 }
                 fout.Close();
                 fstr.Close();
