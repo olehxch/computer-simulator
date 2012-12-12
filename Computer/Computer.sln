@@ -30,5 +30,3 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
-
-Text files (*.txt)|*.txt|Assemble files (*.as)|*.as|Machine code files (*.mc)|*.mc|All files (*.*)|*.*
