@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Collections;
+using System.Collections; 
 
 
 namespace Assembler
@@ -17,6 +17,8 @@ namespace Assembler
         const int REGISTERS = 64;
         const int MAXLABELLENGHT = 6;
 
+        // label must end with ':'
+        // comments start with '#'
         // addressing
         // |         5         |        4       |       3        | 2 | 1 |      0                   |
         // | INSTRUCTION 47-44 | OPERAND1 39-32 | OPERAND2 31-24 |         OPERAND3 7-0 (mem = 23-0)|
@@ -45,9 +47,15 @@ namespace Assembler
         const int SAVE = 13;            // regA mem
         const int CLEAR = 14;           // mem
 
-        // instruction list
-        private String[] INSTRUCTIONSARRAY = { "HALT", "DEC", "DIV", "XIMUL", "XOR", "SHL", "MOV", "JMAE", "JMNGE", ".FILL", "BT", "CMP", "RCL", "LOAD", "SAVE", "CLEAR" };
+        // from assol
+        const int ADD = 15;
+        const int NAND = 16;
+        const int BEQ = 17;
+        const int JALR = 18;
 
+        // instruction list
+        private String[] INSTRUCTIONSARRAY = { "HALT", "DEC", "DIV", "XIMUL", "XOR", "SHL", "MOV", "JMAE", "JMNGE", ".FILL", "BT", "CMP", "RCL", "LOAD", "SAVE", "CLEAR", "ADD", "NADN", "BEQ", "JARL" };
+        
         // symbol map list
         public Dictionary<String, int> symbolMapList = new Dictionary<String, int>();
         public List<String> errorList = new List<String>();
@@ -66,44 +74,39 @@ namespace Assembler
             this.args = args;
         }
         // create symbol map
-        private bool createSymbolMap(int pos, String label)
+        private bool addToSymbolMap(int pos, String label)
         {
-            // if there is a label...
-            if ( label != "" )
+            // if label is starting with letter...
+            if ( (Char.IsLetter(label, 0)) )
             {
-                // if label is starting with letter...
-                if ( (Char.IsLetter(label, 0)) )
+                // if label length is smaller than MAXLABELLENGHT...
+                if ( (label.Length <= MAXLABELLENGHT) )
                 {
-                    // if label length is smaller than MAXLABELLENGHT...
-                    if ( (label.Length <= MAXLABELLENGHT) )
+                    int outpos;
+                    // and check if label exists...
+                    if ( symbolMapList.TryGetValue(label, out outpos) )
                     {
-                        int outpos;
-                        // and check if label exists...
-                        if ( symbolMapList.TryGetValue(label, out outpos) )
-                        {
-                            addErrorLine(pos + "::Two or more labels have equal names...");
-                            return false;
-                        }
-                        else
-                        {
-                            // add label and ist position to Symbol Map List
-                            symbolMapList[label] = pos;
-                            return true;
-                        }
+                        addErrorLine(pos + "::Two or more labels have equal names...");
+                        return false;
                     }
                     else
                     {
-                        addErrorLine(pos + "::Label length \'" + label + "\' has more than " + MAXLABELLENGHT + " letters");
-                        return false;
+                        // add label and ist position to Symbol Map List
+                        symbolMapList[label] = pos;
+                        return true;
                     }
                 }
                 else
                 {
-                    addErrorLine(pos + "::Label \'" + label + "\' is not starting with letter");
+                    addErrorLine(pos + "::Label length \'" + label + "\' has more than " + MAXLABELLENGHT + " letters");
                     return false;
                 }
             }
-            return false;
+            else
+            {
+                addErrorLine(pos + "::Label \'" + label + "\' is not starting with letter");
+                return false;
+            }
         }
 
         // check for invalid instruction
@@ -112,7 +115,7 @@ namespace Assembler
             instruction = instruction.ToUpper();
             if ( !INSTRUCTIONSARRAY.Any(instruction.Contains) )
             {
-                addErrorLine(pos + "::Invalid instruction \'" + instruction + "\'");
+                //addErrorLine(pos + "::Invalid instruction \'" + instruction + "\'");
                 return false;
             }
             return true;
@@ -121,105 +124,89 @@ namespace Assembler
         // check for enough arguments
         private void checkForEnoughtParametrs(int pos, String[] instruction)
         {
-            // for jumps
-            if ( (instruction[1] == "JMAE") || (instruction[1] == "JMNGE") )
+            String inst = instruction[0].ToUpper();
+            
+            // JMAE/JMNGE reg1 reg2 offset/label
+            if ( (inst == "JMAE") || (inst == "JMNGE") )
             {
-                if ( instruction.Length >= 5 )
+                if ( instruction.Length == 4 )
                 {
-                    String[] iArgs = { instruction[2], instruction[3], instruction[4] };
-                    if ( testArgs(iArgs, true) )
+                    if ( (rgxOnlyNum.IsMatch(instruction[1])) && (rgxOnlyNum.IsMatch(instruction[2])) && (rgx.IsMatch(instruction[3])) )
                     {
-                        if ( testAddr(iArgs) ) return;
+                        if ( (convertNumTo(instruction[1]) >= 0 && convertNumTo(instruction[1]) < REGISTERS) && (convertNumTo(instruction[2]) >= 0 && convertNumTo(instruction[2]) < REGISTERS) ) return;
+                        else addErrorLine(pos + "::Arguments has incorrect bounds");
                     }
-                    else addErrorLine(pos + "::Bad arguments");
+                    else addErrorLine(pos + "::Arguments must consists only with numbers");
+                }
+                else addErrorLine(pos + "::Bad arguments");
+                return;
+            }         
+
+            // LOAD/SAVE reg1 mem
+            if ( (inst == "LOAD") || (inst == "SAVE") )
+            {
+                if ( instruction.Length == 3 )
+                {
+                    if ( (rgxOnlyNum.IsMatch(instruction[1]) && rgxOnlyNum.IsMatch(instruction[2])) )
+                    {
+                        if ( (convertNumTo(instruction[1]) >= 0 && convertNumTo(instruction[1]) < REGISTERS) && (convertNumTo(instruction[2]) >= 0 && convertNumTo(instruction[2]) < MAXMEM) ) return;
+                        else addErrorLine(pos + "::Arguments has incorrect bounds");
+                    }
+                    else addErrorLine(pos + "::Arguments must consists only with numbers"); 
                 }
                 else addErrorLine(pos + "::Bad arguments");
                 return;
             }
 
-            // 2 arguments - LOAD/SAVE
-            if ( (instruction[1] == "LOAD") || (instruction[1] == "SAVE") )
+            //  CLEAR/DEC mem
+            if ( (inst == "CLEAR") || (inst == "DEC") )
             {
-                if ( instruction.Length >= 4 )
+                if ( instruction.Length == 2 )
                 {
-                    String[] iArgs = { instruction[2], instruction[3] };
-                    if ( (rgxOnlyNum.IsMatch(iArgs[0]) && rgxOnlyNum.IsMatch(iArgs[1])) )
+                    if ( (rgxOnlyNum.IsMatch(instruction[1])) )
                     {
-                        if ( iArgs.Length == 2 )
-                            if ( (convertNumTo(iArgs[0]) >= 0 && convertNumTo(iArgs[0]) < 64) && (convertNumTo(iArgs[1]) >= 0 && convertNumTo(iArgs[1]) < MAXMEM) ) return;
+                        if ( (convertNumTo(instruction[1]) >= 0 && convertNumTo(instruction[1]) < MAXMEM) ) return;
+                        else addErrorLine(pos + "::Arguments has incorrect bounds");
                     }
-                    else if ( (rgxOnlyNum.IsMatch(iArgs[0]) && rgx.IsMatch(iArgs[1])) )
-                    {
-                        if ( iArgs.Length == 2 )
-                            if ( (convertNumTo(iArgs[0]) >= 0 && convertNumTo(iArgs[0]) < 64) ) return;
-                    }
-                    else addErrorLine(pos + "::Bad arguments");
+                    else addErrorLine(pos + "::Arguments must consists only with numbers");
                 }
                 else addErrorLine(pos + "::Bad arguments");
+                return;
             }
 
-            // 1 arguments - CLEAR
-            if ( (instruction[1] == "CLEAR") )
+            // DIV/XIMUL/XOR/RCL/SHL/JMAE/JMNGE reg1 reg2 reg3
+            if ( (inst == "DIV") || (inst == "XIMUL") || (inst == "XOR") || (inst == "RCL") ||
+                (inst == "SHL") || (inst == "JMAE") || (inst == "JMNGE") )
             {
-                if ( instruction.Length >= 3 )
+                if ( instruction.Length == 4 )
                 {
-                    String[] iArgs = { instruction[2] };
-                    if ( testArgs(iArgs, false) )
+                    if ( (rgxOnlyNum.IsMatch(instruction[1])) && (rgxOnlyNum.IsMatch(instruction[2])) && (rgxOnlyNum.IsMatch(instruction[3])) )
                     {
-                        if ( iArgs.Length == 2 )
-                            if ( (convertNumTo(iArgs[1]) >= 0 && convertNumTo(iArgs[1]) < MAXMEM) ) return;
+                        if ( (convertNumTo(instruction[1]) >= 0 && convertNumTo(instruction[1]) < REGISTERS) && (convertNumTo(instruction[2]) >= 0 && convertNumTo(instruction[2]) < REGISTERS) && (convertNumTo(instruction[3]) >= 0 && convertNumTo(instruction[3]) < REGISTERS) ) return;
+                        else addErrorLine(pos + "::Arguments has incorrect bounds");
                     }
-                    else addErrorLine(pos + "::Bad arguments");
+                    else addErrorLine(pos + "::Arguments must consists only with numbers");
                 }
                 else addErrorLine(pos + "::Bad arguments");
+                return;
             }
 
-            // 3 arguments
-            if ( (instruction[1] == "DIV") || (instruction[1] == "XIMUL") || (instruction[1] == "XOR") || (instruction[1] == "RCL") ||
-                (instruction[1] == "SHL") || (instruction[1] == "JMAE") || (instruction[1] == "JMNGE") )
+            // MOV/BT/CMP reg1 reg2
+            if ( (inst == "MOV") || (inst == "BT") || (inst == "CMP") )
             {
-                if ( instruction.Length >= 5 )
+                if ( instruction.Length == 3 )
                 {
-                    String[] iArgs = { instruction[2], instruction[3], instruction[4] };
-                    if ( testArgs(iArgs, false) )
+                    if ( (rgxOnlyNum.IsMatch(instruction[1])) && (rgxOnlyNum.IsMatch(instruction[2])) )
                     {
-                        if ( testAddr(iArgs) ) return;
+                        if ( (convertNumTo(instruction[1]) >= 0 && convertNumTo(instruction[1]) < REGISTERS) && (convertNumTo(instruction[2]) >= 0 && convertNumTo(instruction[2]) < REGISTERS) ) return;
+                        else addErrorLine(pos + "::Arguments has incorrect bounds");
                     }
-                    else addErrorLine(pos + "::Bad arguments");
+                    else addErrorLine(pos + "::Arguments must consists only with numbers");
                 }
                 else addErrorLine(pos + "::Bad arguments");
+                return;
             }
-
-            // 2 arguments
-            if ( (instruction[1] == "MOV") || (instruction[1] == "BT") || (instruction[1] == "CMP") )
-            {
-                if ( instruction.Length >= 4 )
-                {
-                    String[] iArgs = { instruction[2], instruction[3] };
-                    if ( testArgs(iArgs, false) )
-                    {
-                        if ( testAddr(iArgs) ) return;
-                    }
-                    else addErrorLine(pos + "::Bad arguments");
-                }
-                else addErrorLine(pos + "::Bad arguments");
-            }
-
-            // 1 arguments
-            if ( (instruction[1] == "DEC") )
-            {
-                if ( instruction.Length >= 3 )
-                {
-                    String[] iArgs = { instruction[2] };
-                    if ( testArgs(iArgs, false) )
-                    {
-                        if ( testAddr(iArgs) ) return;
-                    }
-                    else addErrorLine(pos + "::Bad arguments");
-                }
-                else addErrorLine(pos + "::Bad arguments");
-            }
-        }
+         }
 
         private dynamic convertNumTo(dynamic num)
         {
@@ -346,25 +333,6 @@ namespace Assembler
             return errorList;
         }
 
-        // test arguments -> is a number/label
-        private bool testArgs(String[] args, bool isJmp)
-        {
-            if ( isJmp )
-            {
-                if ( args.Length == 3 )
-                    if ( rgxOnlyNum.IsMatch(args[0]) && rgxOnlyNum.IsMatch(args[1]) && rgx.IsMatch(args[2]) ) return true;
-                return false;
-            }
-            else foreach ( var n in args )
-                {
-                    if ( rgxOnlyNum.IsMatch(n) )
-                    {
-                        continue;
-                    }
-                    else return false;
-                } return true;
-        }
-
         // test arguments range
         private bool testAddr(String[] args)
         {
@@ -388,6 +356,7 @@ namespace Assembler
         // read code file and check for errors
         public List<String> readCodeAndCheck()
         {
+            
             // read instructions from file and parse
             String instructionLine;
             StreamReader fstr = new StreamReader(args[0]);
@@ -398,26 +367,43 @@ namespace Assembler
             //Console.WriteLine("----------------------------\nSource code:\n----------------------------");
             while ( (instructionLine = fstr.ReadLine()) != null )
             {
-                // write source code to a console
-                //Console.WriteLine(pos + " : " + instructionLine);
-                res.Add(pos + ":" + instructionLine);
-                // instruction[0] = label
-                // instruction[1] = instruction
-                // instruction[2-i] = arguments
-                // instruction[>i+1] = comment
-                String[] instruction = instructionLine.Split(' ', '\t');
-
-                if ( instruction.Length >= 3 )
+                if ( instructionLine != "" )
                 {
-                    // create symbol map
-                    this.createSymbolMap(pos, instruction[0]);
-                    instruction[1] = instruction[1].ToUpper();
-                    // check for invalid instructions and check for enough arguments
-                    if ( this.checkForInvalidInstruction(pos, instruction[1]) )
+                    // write source code to a console
+                    res.Add(pos + ":" + instructionLine);
+                    // instruction[0] = label
+                    // instruction[1] = instruction
+                    // instruction[2-i] = arguments
+                    // instruction[>i+1] = comment
+
+                    if ( instructionLine.IndexOf('#') != -1 )
+                        instructionLine = instructionLine.Substring(0, instructionLine.IndexOf('#')).Trim();
+                    //instructionLine = instructionLine;
+                    String[] instruction = instructionLine.Split(' ', '\t');
+                    instruction[0] = instruction[0].TrimEnd(':', ' ', '\t');
+
+                    // if it is instruction...
+                    if ( this.checkForInvalidInstruction(pos, instruction[0]) )
+                    {
+                        // check this instruction
                         this.checkForEnoughtParametrs(pos, instruction);
+                    }
+                    else
+                    {
+                        // add label to symbol map
+                        if( instruction[0] != "")
+                            this.addToSymbolMap(pos, instruction[0]);
+
+                        // and check this instruction
+                        String[] inst = new String[instruction.Length - 1];
+                        for ( int i = 1 ; i < instruction.Length ; i++ )
+                        {
+                            inst[i - 1] = instruction[i];
+                        }
+                        this.checkForEnoughtParametrs(pos, inst);
+                    }
+                    pos++;
                 }
-                else this.addErrorLine(pos + "::Unknown instruction \'" );
-                pos++;
             }
 
             // check for correct labels
