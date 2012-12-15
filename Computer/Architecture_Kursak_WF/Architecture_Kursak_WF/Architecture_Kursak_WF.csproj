@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NumberedRichTextBox">
+      <HintPath>..\..\NumberedRichTextBox.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -45,11 +48,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblerClass.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="AssemblerForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="AssemblerForm.Designer.cs">
+      <DependentUpon>AssemblerForm.cs</DependentUpon>
     </Compile>
     <Compile Include="HelpForm.cs">
       <SubType>Form</SubType>
@@ -66,8 +69,8 @@
     <Compile Include="SimulatorForm.Designer.cs">
       <DependentUpon>SimulatorForm.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="AssemblerForm.resx">
+      <DependentUpon>AssemblerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="HelpForm.resx">
       <DependentUpon>HelpForm.cs</DependentUpon>
@@ -84,6 +87,7 @@
     <EmbeddedResource Include="SimulatorForm.resx">
       <DependentUpon>SimulatorForm.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="Properties\DataSources\AssemblerForm.datasource" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -96,6 +100,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

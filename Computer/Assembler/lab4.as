@@ -1,7 +1,7 @@
-asdasd mov 1 992 # dsfdvfdvdfv
-asdasd cmp 1 88
-cmp cmp 1 a
-	halt	 		end program
+load 1 a
+load 1 @b
+asd: load 1 a
+aa: load 1 @b
+	halt
 a .fill 4
-b .fill 1
-des .fill 456
+b .fill 3

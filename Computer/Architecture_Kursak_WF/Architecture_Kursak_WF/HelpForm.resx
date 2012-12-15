@@ -118,45 +118,42 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="richTextBox1.Text" xml:space="preserve">
-    <value>REGISTERS = 64;
+    <value># comment
+label:
+
+REGISTERS = 64;
 MAXLABELLENGHT = 6;
 
 // addressing
-// |         5      	      |   	     4       	  |     	  3             |		2      |        1      |      0        |
-// | INSTRUCTION 47-44 | OPERAND1 39-32 | OPERAND2 31-24 |         OPERAND3 7-0 (mem = 23-0)|
-INSTRUCTION_MEM_SHIFT = 44;
+INDIRRECT_ADDRESSING_SHIFT = 47;
+INSTRUCTION_MEM_SHIFT = 40;
 OPERAND1_MEM_SHIFT = 32;
 OPERAND2_MEM_SHIFT = 24;
 OPERAND3_MEM_SHIFT = 0;
-
-OPERAND1_MASK =    0x000000FF00000000;
-OPERAND2_MASK =    0x00000000FF000000;
-OPERAND3_MASK =    0x0000000000FFFFFF;
-INSTRUCTION_MASK = 0x0000F00000000000;
-
-// arithmetic instructions
-HALT = 0xF;
+        // arithmetic instructions
+HALT = 0x1F;
 DEC = 1;              // DEC regA
-DIV = 2;              // DIV regA regB destreg
-XIMUL = 3;            // XIMUL regA regB destreg
-
-// logic instructions
-XOR = 4;              // XOR regA regB destreg
-SHL = 5;              // SHL regA regB destreg
+DIV = 2;              // DIV regA regB destreg/@mem
+XIMUL = 3;            // XIMUL regA regB destreg/@mem
+        // logic instructions
+XOR = 4;              // XOR regA regB destreg/@mem
+SHL = 5;              // SHL regA regB destreg/@mem
 MOV = 6;              // MOV regA destreg
-
-// control instructions
+        // control instructions
 JMAE = 7;             // regA regB offset
 JMNGE = 8;            // regA regB offset
-
-// flags
+        // flags
 BT = 9;               // regA regB
 CMP = 10;             // regA regB
 RCL = 11;             // regA regB destreg
-
-// other
-LOAD = 12;            // regA mem
-SAVE = 13;            // regA mem
-CLEAR = 14;           // mem</value>
+        // other
+LOAD = 12;            // regA mem/@mem
+SAVE = 13;            // regA mem/@mem
+CLEAR = 14;           // mem
+        // from assol
+ADD = 15;             // regA regB destreg/@mem
+NAND = 16;            // regA regB destreg/@mem
+BEQ = 17;             // regA regB offset/label
+JALR = 18;            // regA regB offset/label</value>
   </data>
 </root>

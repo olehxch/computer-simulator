@@ -13,12 +13,14 @@ using Assembler;
 
 namespace Architecture_Kursak_WF
 {
-    public partial class Form1 : Form
+    public partial class AssemblerForm : Form
     {
         public String filePath = "";
         StreamWriter sw;
         StreamReader sr;
-        public Form1()
+        int lines = 0;
+
+        public AssemblerForm()
         {
             InitializeComponent();
         }
@@ -76,7 +78,7 @@ namespace Architecture_Kursak_WF
 
         private void createToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            tbCodeEditor.Clear();
+            //tbCodeEditor.Clear();
         }
 
         private void assembleToolStripMenuItem_Click(object sender, EventArgs e)
@@ -198,6 +200,47 @@ namespace Architecture_Kursak_WF
         {
             HelpForm hl = new HelpForm();
             hl.Show();
+        }
+
+        private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
+        {
+
+        }
+
+        private void tbCodeEditor_SizeChanged(object sender, EventArgs e)
+        {
+        }
+
+        private void tbCodeEditor_ClientSizeChanged(object sender, EventArgs e)
+        {
+        }
+
+        private void tbCodeEditor_TextChanged(object sender, EventArgs e)
+        {
+            /*lines = tbCodeEditor.Lines.Length;
+            lLineNums.Items.Clear();
+            if ( lines <= 16 )
+                for ( int i = 0 ; i < lines ; i++ )
+                    lLineNums.Items.Add(i);
+            else
+            {
+                for ( int i = lines - 16 ; i < lines ; i++ )
+                    lLineNums.Items.Add(i);
+            }*/
+        }
+
+        private void tbCodeEditor_VScroll(object sender, EventArgs e)
+        {
+            /*lines = tbCodeEditor.Lines.Length;
+            lLineNums.Items.Clear();
+            if ( lines <= 16 )
+                for ( int i = x ; i < lines ; i++ )
+                    lLineNums.Items.Add(i);
+            else
+            {
+                for ( int i = lines - 16 + x ; i < lines ; i++ )
+                    lLineNums.Items.Add(i);
+            }*/
         }
         
     }

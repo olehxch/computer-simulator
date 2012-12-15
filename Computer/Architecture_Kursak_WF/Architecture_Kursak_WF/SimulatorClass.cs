@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows.Forms;
 
 namespace Simulator
 {
@@ -14,7 +15,8 @@ namespace Simulator
         // addressing
         // |         5         |        4       |       3        | 2 | 1 |      0                   |
         // | INSTRUCTION 47-44 | OPERAND1 39-32 | OPERAND2 31-24 |         OPERAND3 7-0 (mem = 23-0)|
-        const int INSTRUCTION_MEM_SHIFT = 44;
+        const int INDIRRECT_ADDRESSING_SHIFT = 47;
+        const int INSTRUCTION_MEM_SHIFT = 40;
         const int OPERAND1_MEM_SHIFT = 32;
         const int OPERAND2_MEM_SHIFT = 24;
         const int OPERAND3_MEM_SHIFT = 0;
@@ -22,9 +24,10 @@ namespace Simulator
         const long OPERAND1_MASK =    0x000000FF00000000;
         const long OPERAND2_MASK =    0x00000000FF000000;
         const long OPERAND3_MASK =    0x0000000000FFFFFF;
-        const long INSTRUCTION_MASK = 0x0000F00000000000;
+        const long INSTRUCTION_MASK = 0x00007F0000000000;
+        const long INDIRRECT_ADDRESSING_MASK = 0x0000800000000000;
         // arithmetic instructions
-        const int HALT = 0xF;
+        const int HALT = 0x1F;
         const int DEC = 1;              // DEC regA
         const int DIV = 2;              // DIV regA regB destreg
         const int XIMUL = 3;            // XIMUL regA regB destreg
@@ -44,25 +47,38 @@ namespace Simulator
         const int SAVE = 13;            // regA mem
         const int CLEAR = 14;           // mem
 
+        // standart instructions
+        const int ADD = 15;             // regA regB destreg
+        const int NAND = 16;            // regA regB destreg
+        const int BEQ = 17;             // regA regB offset
+        const int JALR = 18;
+
         // instruction list
-        private String[] INSTRUCTIONSARRAY = { "HALT", "DEC", "DIV", "XIMUL", "XOR", "SHL", "MOV", "JMAE", "JMNGE", ".FILL", "BT", "CMP", "RCL", "LOAD", "SAVE", "CLEAR" };
+        private String[] INSTRUCTIONSARRAY = { "HALT", "DEC", "DIV", "XIMUL", "XOR", "SHL", "MOV", "JMAE", "JMNGE", ".FILL", "BT", "CMP", "RCL", "LOAD", "SAVE", "CLEAR", "ADD", "NADN", "BEQ", "JARL" };
         String[] args;
 
         // init system
-        int[] registers = new int[64];    // registers [0..63]
-        int[] memory = new int[16777215]; // memory 0..16777215
-                
+        long[] registers = new long[64];    // registers [0..63]
+        long[] memory = new long[256]; // memory 0..16777215
+        Flags f = new Flags();
+        Flags stateFlags;
         // flags [3]
         public class Flags
         {
-            public int CF;    // carry flag
-            public int SF;    // sign flag
-            public int ZF;    // zero flag
+            public long CF;    // carry flag
+            public long SF;    // sign flag
+            public long ZF;    // zero flag
+            public Flags(Flags o)
+            {
+                this.CF = o.CF;
+                this.ZF = o.ZF;
+                this.SF = o.SF;
+            }
+            public Flags() { }
         }
 
         private List<StateClass> states = new List<StateClass>();
         public List<StateClass> getStateList() { return states; }
-        public Dictionary<ulong, long> symbolMapList = new Dictionary<ulong, long>(); // symbol map
 
         public class InstructionClass
         {
@@ -74,13 +90,14 @@ namespace Simulator
 
         public class StateClass 
         {
-            public int ip = 0; // instruction pointer
+            public long ip = 0; // instruction pointer
             public String instructionLine;
-            public int[] reg = new int[64];       // registers [0..63]
-            public int[] mem = new int[16777216]; // memory 0..16777215 
+            public long[] reg = new long[64];       // registers [0..63]
+            public long[] mem = new long[256]; // memory 0..16777215 
             public Flags flags;      // CF, SF, ZF
             public InstructionClass instruction;
-            public StateClass(int ip, String instructionLine, int[] memory, int[] registers, Flags f, InstructionClass i)
+            public bool IndirrectAddressing = false;
+            public StateClass(long ip, bool inAddr, String instructionLine, long[] memory, long[] registers, Flags f, InstructionClass i)
             {
                 this.instructionLine = instructionLine;
                 this.ip = ip;
@@ -91,6 +108,7 @@ namespace Simulator
                 this.flags = f;
                 this.instruction = new InstructionClass();
                 this.instruction = i;
+                this.IndirrectAddressing = inAddr;
             }
         }
 
@@ -100,51 +118,83 @@ namespace Simulator
             {
                 this.args = args;
             
-                // create symbol map
                 // open file for reading
-                StreamReader fstr = new StreamReader(args[0]);
-                String instructionLine;     //  line with instructions readed from file
-                long instruction;
-                ulong pos = 0;
-                while ( (instructionLine = fstr.ReadLine()) != null )
+                try
                 {
-                    instruction = Convert.ToInt64(instructionLine);
-                    long inst = (instruction & INSTRUCTION_MASK) >> INSTRUCTION_MEM_SHIFT;
-                    if ( inst == 0 ) symbolMapList.Add( pos, instruction);
-                    pos++;
+                    StreamReader fstr = new StreamReader(args[0]);
+                    String instructionLine;     //  line with instructions readed from file
+                    uint pos = 0;
+                    while ( (instructionLine = fstr.ReadLine()) != null )
+                    {
+                        if ( pos > Convert.ToUInt32(memory.Length) )
+                        {
+                            MessageBox.Show("Memory overflow", "Memory overflow", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                            break;
+                        }
+                        memory[pos] = Convert.ToInt64(instructionLine);
+                        pos++;
+                    }
+                    fstr.Close();
                 }
-                fstr.Close();
+                catch ( FileNotFoundException e )
+                {
+                }
+            }
+        }
+
+        private long convertInt48ToInt64(long num)
+        {
+            bool sign = Convert.ToBoolean( num & 0x800000000000 );          
+            if ( sign ) // -num
+            {
+                String s = String.Format("{0:X}", num).Insert(0, "FFFF");
+                long x = Convert.ToInt64(s, 16);
+                return x;
+            }
+            else // +num
+            {
+                return Convert.ToInt64( num );
+            }
+        }
+
+        private long convertInt64ToInt48(long num)
+        {
+            if ( num < 0 )
+            {
+                return 0x0001000000000000 - Math.Abs(num);
+            }
+            else
+            {
+                return 0x00007FFFFFFFFFFF & num;
             }
         }
 
         public void runCode()
         {
-            long arg1 = 0, arg2 = 0, arg3 = 0;
+            long arg1 = 0, arg2 = 0, arg3 = 0, inst_ind_addr = 0;
             Int64 instruction;
-            int ip = 0;
+            long ip = 0;
+            long ip_old = 0;
+            states.Add(new StateClass(ip, false, "Initial Status", memory, registers, new Flags(), new InstructionClass()));
 
-            if ( args[0] != null )
+            while ( true )
             {
-                // open file for reading
-                StreamReader fstr = new StreamReader(args[0]);
-                String instructionLine;     //  line with instructions readed from file
-
-                // initial state
-                states.Add(new StateClass(ip, "Initial Status", memory, registers, new Flags(), new InstructionClass()));
-
-                while ( (instructionLine = fstr.ReadLine()) != null )
+                try
                 {
-                    instruction = Convert.ToInt64(instructionLine);
+                    instruction = Convert.ToInt64(memory[ip]);
+                    String instructionLine = instruction.ToString();
                     // init system
-                    Flags f = new Flags();
+                    ip++;
+                    ip_old = ip;
                     InstructionClass ic = new InstructionClass();
                     // get arguments
                     // [ instruction | arg1 | arg2 | arg3 ]
                     arg3 = (instruction & OPERAND3_MASK) >> OPERAND3_MEM_SHIFT;
                     arg2 = (instruction & OPERAND2_MASK) >> OPERAND2_MEM_SHIFT;
                     arg1 = (instruction & OPERAND1_MASK) >> OPERAND1_MEM_SHIFT;
+                    inst_ind_addr = (instruction & INDIRRECT_ADDRESSING_MASK);
                     instruction = (instruction & INSTRUCTION_MASK) >> INSTRUCTION_MEM_SHIFT;
-
+                    bool ind_addr = Convert.ToBoolean(inst_ind_addr);
                     ic.instruction = instruction;
                     ic.arg1 = arg1;
                     ic.arg2 = arg2;
@@ -152,69 +202,149 @@ namespace Simulator
 
                     if ( instruction == LOAD )
                     {
-                        ulong x = Convert.ToUInt32(arg2);
-                        registers[arg1] = Convert.ToInt32(symbolMapList[x]);
+                        if ( ind_addr )
+                            registers[arg1] = memory[memory[arg3]];
+                        else registers[arg1] = memory[arg3];
                     }
                     else if ( instruction == SAVE )
                     {
-                        ulong x = Convert.ToUInt32(arg2);
-                        symbolMapList[x] = memory[arg1];
+                        if ( ind_addr )
+                            memory[memory[arg3]] = registers[arg1];
+                        else memory[arg3] = registers[arg1];
+
                     }
                     else if ( instruction == CLEAR )
                     { memory[arg3] = 0; }
 
                     // DEC, DIV, XIMUL, XOR, SHL, MOV, JMAE, JMNGE, BT, CMP, RCL
                     else if ( instruction == DEC )
-                    { registers[arg1]--; }                      // checked
+                    {
+                        long x = convertInt48ToInt64(registers[arg1]);
+                        registers[arg1] = x--; 
+                    }
                     else if ( instruction == DIV )
-                    { registers[arg3] = registers[arg1] / registers[arg2]; }
+                    {
+                        if ( ind_addr )
+                        {
+                            long r1 = convertInt48ToInt64(registers[arg1]);
+                            long r2 = convertInt48ToInt64(memory[memory[arg3]]);
+                            registers[arg3] = convertInt64ToInt48(r1 / r2); 
+                        }
+                        else
+                        {
+                            long r1 = convertInt48ToInt64(registers[arg1]);
+                            long r2 = convertInt48ToInt64(registers[arg2]);
+                            registers[arg3] = convertInt64ToInt48(r1 / r2); 
+                        }
+                    }
                     else if ( instruction == XIMUL )
-                    { registers[arg3] = registers[arg1] * registers[arg2]; }
+                    {
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        long r2 = convertInt48ToInt64(registers[arg2]);
+                        registers[arg3] = convertInt64ToInt48(r1 * r2); 
+                    }
                     else if ( instruction == XOR )
-                    { registers[arg3] = registers[arg1] ^ registers[arg2]; }
+                    {
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        long r2 = convertInt48ToInt64(registers[arg2]);
+                        registers[arg3] = convertInt64ToInt48( r1 ^ r2 ); 
+                    }
                     else if ( instruction == SHL )
-                    { registers[arg3] = registers[arg1] << registers[arg2]; }
+                    {
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        registers[arg3] = convertInt64ToInt48( r1 << Convert.ToInt32(registers[arg2]) ); 
+                    }
                     else if ( instruction == MOV )
-                    { registers[arg2] = registers[arg1]; }      // checked
+                    { registers[arg2] = registers[arg1]; }
                     else if ( instruction == JMAE )
-                    { if ( registers[arg1] >= registers[arg2] ) ip = ip + 1 + registers[arg3]; }
+                    {
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        long r2 = convertInt48ToInt64(registers[arg2]);
+                        if ( ind_addr )
+                        {
+                            if ( Math.Abs(r1) >= Math.Abs(r2) )
+                                ip = arg3;
+                        }
+                        else if ( Math.Abs(r1) >= Math.Abs(r2) )
+                        {
+                            ip = arg3;
+                        }
+                        ip_old = ip;
+                    }
                     else if ( instruction == JMNGE )
-                    { if ( registers[arg1] <= registers[arg2] ) ip = ip + 1 + registers[arg3]; }
+                    {
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        long r2 = convertInt48ToInt64(registers[arg2]);
+                        if ( ind_addr )
+                        {
+                            if ( r1 <= r2 )
+                                ip = arg3;
+                        }
+                        else if ( r1 <= r2 )
+                        {
+                            ip = arg3;
+                        }
+                        ip_old = ip;
+                    }
                     else if ( instruction == BT )
                     {
-                        int t = registers[arg1];
-                        f.CF = (registers[arg1] << registers[arg2]) ^ registers[arg2] + 1;
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        f.CF = r1 & (1 << Convert.ToInt32(registers[arg2] ) ); 
                     }
-                    else if ( instruction == CMP )            // checked only ZF
+                    else if ( instruction == CMP )
                     {
-                        int res = registers[arg1] - registers[arg2];
-                        if ( res > 0 ) { f.CF = 0; f.SF = 0; f.ZF = 0; }
-                        else if ( res == 0 ) { f.CF = 0; f.SF = 0; f.ZF = 1; }
-                        else if ( res < 0 ) { f.CF = 1; f.SF = 1; f.ZF = 0; }
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        long r2 = convertInt48ToInt64(registers[arg2]);
+                        if ( r1 > 0 ) { f.CF = 0; f.SF = 0; f.ZF = 0; }
+                        else if ( r1 == r2 ) { f.CF = 0; f.SF = 0; f.ZF = 1; }
+                        else if ( r1 < r2 ) { f.CF = 1; f.SF = 1; f.ZF = 0; }
+                    }
+                    else if ( instruction == ADD )
+                    {
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        long r2 = convertInt48ToInt64(registers[arg2]);
+                        registers[arg3] = convertInt64ToInt48(r1 + r2);
+                    }
+                    else if ( instruction == NAND )
+                    {
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        long r2 = convertInt48ToInt64(registers[arg2]);
+                        registers[arg3] = convertInt64ToInt48 ( ~(r1 & r2) );
                     }
                     else if ( instruction == RCL )
                     {
-                        //    int t1, t2;
-                        //    int n = registers[arg1];
-                        //    registers[arg2] = registers[arg2] % (sizeof( int ) * 8);                       // нормализуем n
-                        //    t1 = registers[arg1] << registers[arg2];                      // двигаем а влево на n бит, теряя старшие биты
-                        //    t2 = registers[arg1] >> (sizeof( int ) * 8 - registers[arg2] );    // перегоняем старшие биты в младшие
-                        //    registers[arg3] = t1 | t2;                     // объединяем старшие и младшие биты
-                        int value = registers[arg1];
-                        int count = registers[arg2];
-                        registers[arg3] = (value >> count) + (((value << (32 - count)) >> (32 - count)) << count);
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        int r2 = Convert.ToInt32(convertInt48ToInt64(registers[arg2]));
+                        long t1 = r1;
+                        for( int i=0; i<=r2; i++)
+                        {
+                            f.CF = Convert.ToInt32(Convert.ToBoolean(t1 & 0x800000000000));
+                            t1 = r1 << i;
+                            t1 += f.CF;
+                        }
+                        if ( Convert.ToBoolean(t1 & 0x800000000000) )
+                            registers[arg3] = convertInt64ToInt48( (t1 & 0x0000FFFFFFFFFFFF) - 281474976710656 );
+                        else registers[arg3] = convertInt64ToInt48( t1 & 0x0000FFFFFFFFFFFF);
                     }
 
                     // HALT   
                     else if ( instruction == HALT )     // checked
-                    { states.Add(new StateClass(ip, instructionLine, memory, registers, f, ic));  break; }
-
-                    states.Add(new StateClass(ip, instructionLine, memory, registers, f, ic));
-                    ip++;
+                    {
+                        stateFlags = new Flags(f);
+                        states.Add(new StateClass(ip_old, ind_addr, instructionLine, memory, registers, stateFlags, ic));
+                        break;
+                    }
+                    // instructionLine
+                    stateFlags = new Flags(f);
+                    states.Add(new StateClass(ip_old, ind_addr, instructionLine, memory, registers, stateFlags, ic));
                 }
-                fstr.Close();
+                catch ( Exception e )
+                {
+                    MessageBox.Show("Memory out of bounds", "Memory out of bounds", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                    break;
+                }
+                //ip++;
             }
         }
-
     }
 }
