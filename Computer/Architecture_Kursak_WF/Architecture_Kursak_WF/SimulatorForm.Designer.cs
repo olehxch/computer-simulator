@@ -34,7 +34,6 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.lbState = new System.Windows.Forms.ListView();
-            this.State = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.IP = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.Instruction = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -74,6 +73,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.State = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -157,20 +157,17 @@
             this.lbState.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.lbState_ItemSelectionChanged);
             this.lbState.SelectedIndexChanged += new System.EventHandler(this.lbState_SelectedIndexChanged);
             // 
-            // State
-            // 
-            this.State.Text = "State";
-            this.State.Width = 0;
-            // 
             // IP
             // 
+            this.IP.DisplayIndex = 0;
             this.IP.Text = "IP";
             this.IP.Width = 35;
             // 
             // Instruction
             // 
+            this.Instruction.DisplayIndex = 1;
             this.Instruction.Text = "Instruction";
-            this.Instruction.Width = 119;
+            this.Instruction.Width = 196;
             // 
             // groupBox2
             // 
@@ -522,6 +519,11 @@
             // 
             this.saveFileDialog1.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
             // 
+            // State
+            // 
+            this.State.DisplayIndex = 2;
+            this.State.Width = 0;
+            // 
             // SimulatorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -563,7 +565,6 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.ToolStripStatusLabel statusSimulatorLabel;
         private System.Windows.Forms.ListView lbState;
-        private System.Windows.Forms.ColumnHeader State;
         private System.Windows.Forms.ColumnHeader IP;
         private System.Windows.Forms.ColumnHeader Instruction;
         private System.Windows.Forms.GroupBox groupBox3;
@@ -602,6 +603,7 @@
         private System.Windows.Forms.TextBox tbDecodeToDec;
         private System.Windows.Forms.TextBox tbDecodeToHex;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+        private System.Windows.Forms.ColumnHeader State;
 
     }
 }
