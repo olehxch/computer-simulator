@@ -51,32 +51,38 @@ namespace Architecture_Kursak_WF
 
                 lbState.Items.Clear();
                 ListViewItem lvi;
-                if ( stateList.Count < 100 )
+                try
                 {
-                    lbState.BeginUpdate();
-                    foreach ( var i in stateList )
+                    if ( stateList.Count < 500 )
                     {
-                        if ( i.instructionLine == "Initial Status" )
+                        lbState.BeginUpdate();
+                        foreach ( var i in stateList )
                         {
-                            lvi = new ListViewItem(new String[] { statenum.ToString(), i.ip.ToString(), i.instructionLine });
+                            if ( i.instructionLine == "Initial Status" )
+                            {
+                                lvi = new ListViewItem(new String[] { statenum.ToString(), i.ip.ToString(), i.instructionLine });
 
-                            lbState.Items.Add(lvi);
-                            statenum++;
+                                lbState.Items.Add(lvi);
+                                statenum++;
+                            }
+                            else
+                            {
+                                Int64 inum = Convert.ToInt64(i.instructionLine);
+
+                                String fhex = String.Format("{0:X}", inum);
+                                lvi = new ListViewItem(new String[] { statenum.ToString(), i.ip.ToString(), i.instructionLine });
+
+                                lbState.Items.Add(lvi);
+                                statenum++;
+                            }
                         }
-                        else
-                        {
-                            Int64 inum = Convert.ToInt64(i.instructionLine);
-
-                            String fhex = String.Format("{0:X}", inum);
-                            lvi = new ListViewItem(new String[] { statenum.ToString(), i.ip.ToString(), i.instructionLine });
-
-                            lbState.Items.Add(lvi);
-                            statenum++;
-                        }
+                        lbState.EndUpdate();
                     }
-                    lbState.EndUpdate();
+                } catch( OutOfMemoryException ex )
+                {
+                    MessageBox.Show("Memory out of bounds", "Memory out of bounds", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                 }
-                else MessageBox.Show("Memory out of bounds", "Memory out of bounds", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+               
             }
         }
 

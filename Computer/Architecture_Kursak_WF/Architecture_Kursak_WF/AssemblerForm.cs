@@ -117,22 +117,17 @@ namespace Architecture_Kursak_WF
         }
         public void assemble() 
         {
-            String[] args = new String[2];
-
-            args[0] = filePath;
-            args[1] = filePath.Substring(0, filePath.Length - 3) + ".mc";
             rtbConsole.Text = "";
 
-            AssemblerClass assembler = new AssemblerClass(args);
+            AssemblerClass assembler = new AssemblerClass(filePath, filePath.Substring(0, filePath.Length - 3) + ".mc");
             var a = assembler.readCodeAndCheck();
-            if ( a.Count > 0 )
+            if ( a )
             {
                 var b = assembler.createMachineCode();
 
                 foreach ( var i in b )
                 {
-                    MatchCollection s = new Regex( @"\w+\b" ).Matches(i);
-                    rtbConsole.Text += s[0].ToString() + " = " + s[1].ToString() + '\n';
+                    rtbConsole.Text += i + " = " + String.Format("0x{0:X}", Convert.ToInt64(i) ) + '\n';
                 }
                 toolStripStatusLabel1.Text = "Assembled successfully";
                 statusStrip1.BackColor = Color.ForestGreen;
@@ -151,7 +146,6 @@ namespace Architecture_Kursak_WF
                 foreach ( var i in assembler.getErrorList() )
                     rtbConsole.Text += i + "\n";
             }
-            // end assembling
         }
 
         private void simulateToolStripMenuItem_Click(object sender, EventArgs e)
@@ -204,7 +198,6 @@ namespace Architecture_Kursak_WF
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
-
         }
 
         private void tbCodeEditor_SizeChanged(object sender, EventArgs e)
@@ -217,30 +210,10 @@ namespace Architecture_Kursak_WF
 
         private void tbCodeEditor_TextChanged(object sender, EventArgs e)
         {
-            /*lines = tbCodeEditor.Lines.Length;
-            lLineNums.Items.Clear();
-            if ( lines <= 16 )
-                for ( int i = 0 ; i < lines ; i++ )
-                    lLineNums.Items.Add(i);
-            else
-            {
-                for ( int i = lines - 16 ; i < lines ; i++ )
-                    lLineNums.Items.Add(i);
-            }*/
         }
 
         private void tbCodeEditor_VScroll(object sender, EventArgs e)
         {
-            /*lines = tbCodeEditor.Lines.Length;
-            lLineNums.Items.Clear();
-            if ( lines <= 16 )
-                for ( int i = x ; i < lines ; i++ )
-                    lLineNums.Items.Add(i);
-            else
-            {
-                for ( int i = lines - 16 + x ; i < lines ; i++ )
-                    lLineNums.Items.Add(i);
-            }*/
         }
         
     }

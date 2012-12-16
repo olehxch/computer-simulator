@@ -286,6 +286,27 @@ namespace Simulator
                         }
                         ip_old = ip;
                     }
+                    else if ( instruction == BEQ )
+                    {
+                        long r1 = convertInt48ToInt64(registers[arg1]);
+                        long r2 = convertInt48ToInt64(registers[arg2]);
+                        if ( ind_addr )
+                        {
+                            if ( r1 == r2 )
+                                ip = arg3;
+                        }
+                        else if ( r1 == r2 )
+                        {
+                            ip = arg3;
+                        }
+                        ip_old = ip;
+                    }
+                    else if ( instruction == JALR )
+                    {
+                        registers[arg2] = ip;
+                        ip = arg1;
+                        ip_old = ip;
+                    }
                     else if ( instruction == BT )
                     {
                         long r1 = convertInt48ToInt64(registers[arg1]);
@@ -341,9 +362,8 @@ namespace Simulator
                 catch ( Exception e )
                 {
                     MessageBox.Show("Memory out of bounds", "Memory out of bounds", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
-                    break;
+                    return;
                 }
-                //ip++;
             }
         }
     }

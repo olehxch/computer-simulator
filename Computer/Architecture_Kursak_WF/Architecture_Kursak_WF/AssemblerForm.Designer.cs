@@ -44,6 +44,7 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.splitContainerPanels = new System.Windows.Forms.SplitContainer();
+            this.tbCodeEditor = new System.Windows.Forms.RichTextBox();
             this.tabSymbolList = new System.Windows.Forms.TabControl();
             this.tabConsole = new System.Windows.Forms.TabPage();
             this.rtbConsole = new System.Windows.Forms.RichTextBox();
@@ -52,8 +53,6 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            this.tbCodeEditor = new System.Windows.Forms.RichTextBox();
-            this.lLineNums = new System.Windows.Forms.ListBox();
             this.assemblerFormBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.assemblerFormBindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             this.menuStrip1.SuspendLayout();
@@ -192,7 +191,6 @@
             // 
             // splitContainerPanels.Panel1
             // 
-            this.splitContainerPanels.Panel1.Controls.Add(this.lLineNums);
             this.splitContainerPanels.Panel1.Controls.Add(this.tbCodeEditor);
             // 
             // splitContainerPanels.Panel2
@@ -201,6 +199,21 @@
             this.splitContainerPanels.Size = new System.Drawing.Size(770, 402);
             this.splitContainerPanels.SplitterDistance = 245;
             this.splitContainerPanels.TabIndex = 3;
+            // 
+            // tbCodeEditor
+            // 
+            this.tbCodeEditor.AcceptsTab = true;
+            this.tbCodeEditor.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tbCodeEditor.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.tbCodeEditor.Location = new System.Drawing.Point(0, 0);
+            this.tbCodeEditor.Name = "tbCodeEditor";
+            this.tbCodeEditor.Size = new System.Drawing.Size(770, 245);
+            this.tbCodeEditor.TabIndex = 2;
+            this.tbCodeEditor.Text = "";
+            this.tbCodeEditor.VScroll += new System.EventHandler(this.tbCodeEditor_VScroll);
+            this.tbCodeEditor.ClientSizeChanged += new System.EventHandler(this.tbCodeEditor_ClientSizeChanged);
+            this.tbCodeEditor.SizeChanged += new System.EventHandler(this.tbCodeEditor_SizeChanged);
+            this.tbCodeEditor.TextChanged += new System.EventHandler(this.tbCodeEditor_TextChanged);
             // 
             // tabSymbolList
             // 
@@ -279,38 +292,6 @@
             this.saveFileDialog1.Filter = "Assemble files (*.as)|*.as|Machine code files (*.mc)|*.mc|Text files (*.txt)|*.tx" +
     "t|All files (*.*)|*.*";
             // 
-            // tbCodeEditor
-            // 
-            this.tbCodeEditor.AcceptsTab = true;
-            this.tbCodeEditor.Dock = System.Windows.Forms.DockStyle.Right;
-            this.tbCodeEditor.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.tbCodeEditor.Location = new System.Drawing.Point(0, 0);
-            this.tbCodeEditor.Name = "tbCodeEditor";
-            this.tbCodeEditor.Size = new System.Drawing.Size(770, 245);
-            this.tbCodeEditor.TabIndex = 2;
-            this.tbCodeEditor.Text = "";
-            this.tbCodeEditor.VScroll += new System.EventHandler(this.tbCodeEditor_VScroll);
-            this.tbCodeEditor.ClientSizeChanged += new System.EventHandler(this.tbCodeEditor_ClientSizeChanged);
-            this.tbCodeEditor.SizeChanged += new System.EventHandler(this.tbCodeEditor_SizeChanged);
-            this.tbCodeEditor.TextChanged += new System.EventHandler(this.tbCodeEditor_TextChanged);
-            // 
-            // lLineNums
-            // 
-            this.lLineNums.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lLineNums.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lLineNums.Enabled = false;
-            this.lLineNums.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.lLineNums.FormattingEnabled = true;
-            this.lLineNums.ItemHeight = 15;
-            this.lLineNums.Items.AddRange(new object[] {
-            "0"});
-            this.lLineNums.Location = new System.Drawing.Point(0, 0);
-            this.lLineNums.Name = "lLineNums";
-            this.lLineNums.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.lLineNums.SelectionMode = System.Windows.Forms.SelectionMode.None;
-            this.lLineNums.Size = new System.Drawing.Size(0, 245);
-            this.lLineNums.TabIndex = 3;
-            // 
             // assemblerFormBindingSource
             // 
             this.assemblerFormBindingSource.DataSource = typeof(Architecture_Kursak_WF.AssemblerForm);
@@ -375,7 +356,6 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem fastSaveToolStripMenuItem;
         private System.Windows.Forms.RichTextBox tbCodeEditor;
-        private System.Windows.Forms.ListBox lLineNums;
         private System.Windows.Forms.BindingSource assemblerFormBindingSource;
         private System.Windows.Forms.BindingSource assemblerFormBindingSource1;
     }
