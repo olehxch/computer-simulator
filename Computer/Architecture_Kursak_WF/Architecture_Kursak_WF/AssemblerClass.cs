@@ -18,7 +18,7 @@ namespace Assembler
         // addressing
         // |        6          |         5         |        4       |       3        | 2 | 1 |      0                   |
         // | INSTRUCTION 47-44 | INSTRUCTION 43-40 | OPERAND1 39-32 | OPERAND2 31-24 |         OPERAND3 7-0 (mem = 23-0)|
-        const int INDIRRECT_ADDRESSING_SHIFT = 47;
+        const int INDIRECT_ADDRESSING_SHIFT = 47;
         const int INSTRUCTION_MEM_SHIFT = 40;
         const int OPERAND1_MEM_SHIFT = 32;
         const int OPERAND2_MEM_SHIFT = 24;
@@ -213,14 +213,14 @@ namespace Assembler
                         if ( !testRegisterBounds( toInt(instruction[1])) )
                             addErrorLine(pos + "::Arguments has incorrect bounds");
 
-                        if( rgxOnlyLeters.IsMatch(instruction[2]))
+                        if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )
                         {
-                            if(!testGetLabelFromSymbolList(instruction[2]) )
+                            if ( !testGetIndirrectLabelFromSymbolList(instruction[2]) ) 
                                 addErrorLine(pos + "::There is not label \'" + instruction[2] + '\'');
                         } 
-                        else if( rgxIndirrectAddressing.IsMatch(instruction[2]) )
+                        else if( rgxOnlyLeters.IsMatch(instruction[2]) )
                         {
-                            if ( !testGetIndirrectLabelFromSymbolList(instruction[2]) )
+                            if ( !testGetLabelFromSymbolList(instruction[2]) )
                                 addErrorLine(pos + "::There is not label \'" + instruction[2] + '\'');
                         }
                     }
@@ -252,21 +252,21 @@ namespace Assembler
             {
                 if ( instruction.Length == 4 )
                 {
-                    if ( (rgxOnlyNumbers.IsMatch(instruction[1])) && (rgxOnlyNumbers.IsMatch(instruction[2])) && ( rgxOnlyNumbers.IsMatch(instruction[3]) || rgxIndirrectAddressing.IsMatch(instruction[2]) ) )
+                    if ( (rgxOnlyNumbers.IsMatch(instruction[1])) && (rgxOnlyNumbers.IsMatch(instruction[2])) && ( rgxOnlyNumbers.IsMatch(instruction[3]) || rgxIndirrectAddressing.IsMatch(instruction[3]) ) )
                     {
                         if ( !testRegisterBounds(toInt(instruction[1])) || !testRegisterBounds(toInt(instruction[2])) )
                             addErrorLine(pos + "::Arguments has incorrect bounds");
 
-                        if ( rgxOnlyNumbers.IsMatch(instruction[3]) )
+                        if ( rgxIndirrectAddressing.IsMatch(instruction[3]) )
+                        {
+                            if ( !testGetIndirrectLabelFromSymbolList(instruction[3]) )
+                                addErrorLine(pos + "::There is not label \'" + instruction[3] + '\'');
+                        } else if ( rgxOnlyNumbers.IsMatch(instruction[3]) )
                         {
                             if ( !testRegisterBounds(toInt(instruction[3])) )
                                 addErrorLine(pos + "::Arguments has incorrect bounds");
                         }
-                        else if ( rgxIndirrectAddressing.IsMatch(instruction[3]) )
-                        {
-                            if ( !testGetIndirrectLabelFromSymbolList(instruction[3]) )
-                                addErrorLine(pos + "::There is not label \'" + instruction[3] + '\'');
-                        }
+
                     }
                     else addErrorLine(pos + "::Arguments must consists only with numbers or have indirrect addressing with '@'");
                 }
@@ -341,7 +341,7 @@ namespace Assembler
             {
                 // if @mem
                 if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )
-                    com = INDIRRECT << INDIRRECT_ADDRESSING_SHIFT | LOAD << INSTRUCTION_MEM_SHIFT | toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT | toUInt64(symbolMapList[instruction[2].Remove(0, 1)]) << OPERAND3_MEM_SHIFT;
+                    com = INDIRRECT << INDIRECT_ADDRESSING_SHIFT | LOAD << INSTRUCTION_MEM_SHIFT | toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT | toUInt64(symbolMapList[instruction[2].Remove(0, 1)]) << OPERAND3_MEM_SHIFT;
                 else // if mem
                     com = LOAD << INSTRUCTION_MEM_SHIFT | toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT | toUInt64(symbolMapList[instruction[2]]) << OPERAND3_MEM_SHIFT;
             }
@@ -351,7 +351,7 @@ namespace Assembler
             {
                 // if @mem
                 if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )
-                    com = INDIRRECT << INDIRRECT_ADDRESSING_SHIFT | SAVE << INSTRUCTION_MEM_SHIFT | toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT | toUInt64(symbolMapList[instruction[2].Remove(0, 1)]) << OPERAND3_MEM_SHIFT;
+                    com = INDIRRECT << INDIRECT_ADDRESSING_SHIFT | SAVE << INSTRUCTION_MEM_SHIFT | toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT | toUInt64(symbolMapList[instruction[2].Remove(0, 1)]) << OPERAND3_MEM_SHIFT;
                 else // if mem
                     com = SAVE << INSTRUCTION_MEM_SHIFT | toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT | toUInt64(symbolMapList[instruction[2]]) << OPERAND3_MEM_SHIFT;
             }
@@ -365,29 +365,29 @@ namespace Assembler
                     com = DEC << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT);
             // div reg1 reg2 reg3/@mem
             else if ( instruction[0] == "div" )
-                if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )  // if @mem
-                    com = INDIRRECT << INDIRRECT_ADDRESSING_SHIFT | (DIV << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
+                if ( rgxIndirrectAddressing.IsMatch(instruction[3]) )  // if @mem
+                    com = INDIRRECT << INDIRECT_ADDRESSING_SHIFT | (DIV << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
                 else // if mem
                     com = DIV << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(instruction[3]) << OPERAND3_MEM_SHIFT;
             
             // ximul reg1 reg2 reg3/@mem
             else if ( instruction[0] == "ximul" )
-                if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )  // if @mem
-                    com = INDIRRECT << INDIRRECT_ADDRESSING_SHIFT | (toUInt64(XIMUL) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
+                if ( rgxIndirrectAddressing.IsMatch(instruction[3]) )  // if @mem
+                    com = INDIRRECT << INDIRECT_ADDRESSING_SHIFT | (toUInt64(XIMUL) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
                 else // if mem
                     com = XIMUL << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(instruction[3]) << OPERAND3_MEM_SHIFT;
            
             // xor reg1 reg2 reg3/@mem
             else if ( instruction[0] == "xor" )
-                if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )  // if @mem
-                    com = INDIRRECT << INDIRRECT_ADDRESSING_SHIFT | (toUInt64(XOR) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
+                if ( rgxIndirrectAddressing.IsMatch(instruction[3]) )  // if @mem
+                    com = INDIRRECT << INDIRECT_ADDRESSING_SHIFT | (toUInt64(XOR) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
                 else // if mem
                     com = XOR << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(instruction[3]) << OPERAND3_MEM_SHIFT;
            
             // shl reg1 reg2 reg3/@mem
             else if ( instruction[0] == "shl" )
-                if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )  // if @mem
-                    com = INDIRRECT << INDIRRECT_ADDRESSING_SHIFT | (toUInt64(SHL) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
+                if ( rgxIndirrectAddressing.IsMatch(instruction[3]) )  // if @mem
+                    com = INDIRRECT << INDIRECT_ADDRESSING_SHIFT | (toUInt64(SHL) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
                 else // if mem
                     com = SHL << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(instruction[3]) << OPERAND3_MEM_SHIFT;
             
@@ -397,15 +397,15 @@ namespace Assembler
 
             // add div reg1 reg2 reg3/@mem
             else if ( instruction[0] == "add" )
-                if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )  // if @mem
-                    com = INDIRRECT << INDIRRECT_ADDRESSING_SHIFT | (toUInt64(ADD) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
+                if ( rgxIndirrectAddressing.IsMatch(instruction[3]) )  // if @mem
+                    com = INDIRRECT << INDIRECT_ADDRESSING_SHIFT | (toUInt64(ADD) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
                 else // if mem
                     com = ADD << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(instruction[3]) << OPERAND3_MEM_SHIFT;
             
             // nand reg1 reg2 reg3/@mem
             else if ( instruction[0] == "nand" )
-                if ( rgxIndirrectAddressing.IsMatch(instruction[2]) )  // if @mem
-                    com = INDIRRECT << INDIRRECT_ADDRESSING_SHIFT | (toUInt64(NAND) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
+                if ( rgxIndirrectAddressing.IsMatch(instruction[3]) )  // if @mem
+                    com = INDIRRECT << INDIRECT_ADDRESSING_SHIFT | (toUInt64(NAND) << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(symbolMapList[instruction[3].Remove(0, 1)]) << OPERAND3_MEM_SHIFT);
                 else // if mem
                     com = NAND << INSTRUCTION_MEM_SHIFT | (toUInt64(instruction[1]) << OPERAND1_MEM_SHIFT) | toUInt64(instruction[2]) << OPERAND2_MEM_SHIFT | toUInt64(instruction[3]) << OPERAND3_MEM_SHIFT;
             
@@ -535,7 +535,9 @@ namespace Assembler
                     }
                     else
                     {
-                        addToSymbolMap(pos, instructionLine.Substring(0, instructionLine.IndexOf(' ')) );
+                        if( instructionLine.IndexOf(' ') != -1)
+                            addToSymbolMap(pos, instructionLine.Substring(0, instructionLine.IndexOf(' ')) );
+                        else addToSymbolMap(pos, instructionLine.Trim() );
                         instructionList.Add( instructionLine.Substring( instructionLine.IndexOf(' ')+1, (instructionLine.Length - 1) - instructionLine.IndexOf(' ')) );
                     }
                 }

@@ -15,7 +15,7 @@ namespace Simulator
         // addressing
         // |         5         |        4       |       3        | 2 | 1 |      0                   |
         // | INSTRUCTION 47-44 | OPERAND1 39-32 | OPERAND2 31-24 |         OPERAND3 7-0 (mem = 23-0)|
-        const int INDIRRECT_ADDRESSING_SHIFT = 47;
+        const int INDIRECT_ADDRESSING_SHIFT = 47;
         const int INSTRUCTION_MEM_SHIFT = 40;
         const int OPERAND1_MEM_SHIFT = 32;
         const int OPERAND2_MEM_SHIFT = 24;
@@ -25,7 +25,7 @@ namespace Simulator
         const long OPERAND2_MASK =    0x00000000FF000000;
         const long OPERAND3_MASK =    0x0000000000FFFFFF;
         const long INSTRUCTION_MASK = 0x00007F0000000000;
-        const long INDIRRECT_ADDRESSING_MASK = 0x0000800000000000;
+        const long INDIRECT_ADDRESSING_MASK = 0x0000800000000000;
         // arithmetic instructions
         const int HALT = 0x1F;
         const int DEC = 1;              // DEC regA
@@ -192,7 +192,7 @@ namespace Simulator
                     arg3 = (instruction & OPERAND3_MASK) >> OPERAND3_MEM_SHIFT;
                     arg2 = (instruction & OPERAND2_MASK) >> OPERAND2_MEM_SHIFT;
                     arg1 = (instruction & OPERAND1_MASK) >> OPERAND1_MEM_SHIFT;
-                    inst_ind_addr = (instruction & INDIRRECT_ADDRESSING_MASK);
+                    inst_ind_addr = (instruction & INDIRECT_ADDRESSING_MASK);
                     instruction = (instruction & INSTRUCTION_MASK) >> INSTRUCTION_MEM_SHIFT;
                     bool ind_addr = Convert.ToBoolean(inst_ind_addr);
                     ic.instruction = instruction;
@@ -239,20 +239,48 @@ namespace Simulator
                     }
                     else if ( instruction == XIMUL )
                     {
-                        long r1 = convertInt48ToInt64(registers[arg1]);
-                        long r2 = convertInt48ToInt64(registers[arg2]);
-                        registers[arg3] = convertInt64ToInt48(r1 * r2); 
+                        if ( ind_addr )
+                        {
+                            long r1 = convertInt48ToInt64(registers[arg1]);
+                            long r2 = convertInt48ToInt64(memory[memory[arg3]]);
+                            registers[arg3] = convertInt64ToInt48(r1 * r2);
+                        }
+                        else
+                        {
+                            long r1 = convertInt48ToInt64(registers[arg1]);
+                            long r2 = convertInt48ToInt64(registers[arg2]);
+                            registers[arg3] = convertInt64ToInt48(r1 * r2);
+                        }
                     }
                     else if ( instruction == XOR )
                     {
-                        long r1 = convertInt48ToInt64(registers[arg1]);
-                        long r2 = convertInt48ToInt64(registers[arg2]);
-                        registers[arg3] = convertInt64ToInt48( r1 ^ r2 ); 
+                        if ( ind_addr )
+                        {
+                            long r1 = convertInt48ToInt64(registers[arg1]);
+                            long r2 = convertInt48ToInt64(memory[memory[arg3]]);
+                            registers[arg3] = convertInt64ToInt48(r1 ^ r2);
+                        }
+                        else
+                        {
+                            long r1 = convertInt48ToInt64(registers[arg1]);
+                            long r2 = convertInt48ToInt64(registers[arg2]);
+                            registers[arg3] = convertInt64ToInt48(r1 ^ r2);
+                        }
                     }
                     else if ( instruction == SHL )
                     {
-                        long r1 = convertInt48ToInt64(registers[arg1]);
-                        registers[arg3] = convertInt64ToInt48( r1 << Convert.ToInt32(registers[arg2]) ); 
+                        if ( ind_addr )
+                        {
+                            long r1 = convertInt48ToInt64(registers[arg1]);
+                            long r2 = convertInt48ToInt64(memory[memory[arg3]]);
+                            registers[arg3] = convertInt64ToInt48( r1 << Convert.ToInt32(registers[arg2]) ); 
+                        }
+                        else
+                        {
+                            long r1 = convertInt48ToInt64(registers[arg1]);
+                            long r2 = convertInt48ToInt64(registers[arg2]);
+                            registers[arg3] = convertInt64ToInt48( r1 << Convert.ToInt32(registers[arg2]) ); 
+                        }
                     }
                     else if ( instruction == MOV )
                     { registers[arg2] = registers[arg1]; }

@@ -311,7 +311,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "AssemblerForm";
-            this.Text = "Computer architecture - assembler & simulator - Created by Oleg Chaplya, 2012";
+            this.Text = "Computer architecture - assembler & simulator - Created by Oleh Chaplya, 2012";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);

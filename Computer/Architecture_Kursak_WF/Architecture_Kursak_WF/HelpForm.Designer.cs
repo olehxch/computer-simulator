@@ -51,7 +51,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(206, 17);
             this.label1.TabIndex = 1;
-            this.label1.Text = "Created by Oleg Chaplya, 2012";
+            this.label1.Text = "Created by Oleh Chaplya, 2012";
             // 
             // HelpForm
             // 

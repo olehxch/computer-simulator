@@ -1,5 +1,5 @@
 start: load 1 a
-load 2 a
+bvc
 jmae 1 8 6
 load 3 a
 load 4 a
