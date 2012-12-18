@@ -211,7 +211,6 @@ namespace Simulator
                         if ( ind_addr )
                             memory[memory[arg3]] = registers[arg1];
                         else memory[arg3] = registers[arg1];
-
                     }
                     else if ( instruction == CLEAR )
                     { memory[arg3] = 0; }
