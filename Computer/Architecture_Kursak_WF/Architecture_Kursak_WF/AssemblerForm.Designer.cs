@@ -39,8 +39,6 @@
             this.assembleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.simulateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.fastSaveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.splitContainerPanels = new System.Windows.Forms.SplitContainer();
@@ -75,9 +73,7 @@
             this.fileToolStripMenuItem,
             this.assembleToolStripMenuItem,
             this.simulateToolStripMenuItem,
-            this.helpToolStripMenuItem,
-            this.toolStripMenuItem1,
-            this.fastSaveToolStripMenuItem});
+            this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(770, 24);
@@ -148,21 +144,6 @@
             this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.helpToolStripMenuItem.Text = "Help";
             this.helpToolStripMenuItem.Click += new System.EventHandler(this.helpToolStripMenuItem_Click);
-            // 
-            // toolStripMenuItem1
-            // 
-            this.toolStripMenuItem1.Enabled = false;
-            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(22, 20);
-            this.toolStripMenuItem1.Text = "|";
-            // 
-            // fastSaveToolStripMenuItem
-            // 
-            this.fastSaveToolStripMenuItem.Name = "fastSaveToolStripMenuItem";
-            this.fastSaveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.fastSaveToolStripMenuItem.Size = new System.Drawing.Size(66, 20);
-            this.fastSaveToolStripMenuItem.Text = "Fast save";
-            this.fastSaveToolStripMenuItem.Click += new System.EventHandler(this.fastSaveToolStripMenuItem_Click);
             // 
             // statusStrip1
             // 
@@ -353,8 +334,6 @@
         private System.Windows.Forms.RichTextBox rtbConsole;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.RichTextBox rtbSymbolMap;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem fastSaveToolStripMenuItem;
         private System.Windows.Forms.RichTextBox tbCodeEditor;
         private System.Windows.Forms.BindingSource assemblerFormBindingSource;
         private System.Windows.Forms.BindingSource assemblerFormBindingSource1;

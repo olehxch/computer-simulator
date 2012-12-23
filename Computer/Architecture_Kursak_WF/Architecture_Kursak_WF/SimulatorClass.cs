@@ -219,7 +219,7 @@ namespace Simulator
                     else if ( instruction == DEC )
                     {
                         long x = convertInt48ToInt64(registers[arg1]);
-                        registers[arg1] = x--; 
+                        registers[arg1] = x-1; 
                     }
                     else if ( instruction == DIV )
                     {
@@ -331,21 +331,32 @@ namespace Simulator
                     else if ( instruction == JALR )
                     {
                         registers[arg2] = ip;
-                        ip = arg1;
+                        ip = registers[arg1];
                         ip_old = ip;
                     }
                     else if ( instruction == BT )
                     {
                         long r1 = convertInt48ToInt64(registers[arg1]);
-                        f.CF = r1 & (1 << Convert.ToInt32(registers[arg2] ) ); 
+                        int r2 = Convert.ToInt32(registers[arg2]);
+                        f.CF = Convert.ToInt64((r1 & (1 << r2 )) != 0);
                     }
                     else if ( instruction == CMP )
                     {
                         long r1 = convertInt48ToInt64(registers[arg1]);
                         long r2 = convertInt48ToInt64(registers[arg2]);
-                        if ( r1 > 0 ) { f.CF = 0; f.SF = 0; f.ZF = 0; }
-                        else if ( r1 == r2 ) { f.CF = 0; f.SF = 0; f.ZF = 1; }
-                        else if ( r1 < r2 ) { f.CF = 1; f.SF = 1; f.ZF = 0; }
+
+                        if ( r1 == r2 ) 
+                        { 
+                            f.CF = 0; f.SF = 0; f.ZF = 1; 
+                        }
+                        else if ( r1 > r2 ) 
+                        { 
+                            f.CF = 0; f.SF = 0; f.ZF = 0; 
+                        }
+                        else if ( r1 < r2 ) 
+                        { 
+                            f.CF = 1; f.SF = 1; f.ZF = 0; 
+                        }
                     }
                     else if ( instruction == ADD )
                     {

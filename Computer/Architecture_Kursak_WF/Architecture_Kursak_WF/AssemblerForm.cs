@@ -78,7 +78,7 @@ namespace Architecture_Kursak_WF
 
         private void createToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //tbCodeEditor.Clear();
+           tbCodeEditor.Clear();
         }
 
         private void assembleToolStripMenuItem_Click(object sender, EventArgs e)
